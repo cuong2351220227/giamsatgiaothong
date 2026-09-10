@@ -514,9 +514,11 @@ Module `scripts/tracker_counter.py` dùng ByteTrack để duy trì ID, vẽ qu�
 ```powershell
 python scripts\tracker_counter.py `
        --source test_samples\videos\17604987-hd_1920_1080_30fps.mp4 `
-       --line-coords 320,360,960,360 `
+       --line-coords 100,800,1820,800 `
        --conf 0.35
 ```
+
+`--line-coords` dùng tọa độ pixel theo kích thước video. Với video mẫu `1920x1080`, vạch ở `y=800` nằm trên mặt đường; không nên dùng `y=360` vì đó là vùng phía trên các phương tiện.
 
 Có thể truyền tọa độ vạch dạng JSON:
 
