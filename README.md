@@ -487,6 +487,26 @@ python scripts\train.py --help
 python scripts\inference_test.py --help
 ```
 
+### Pipeline xử lý video và RTSP
+
+Module `scripts/pipeline_detector.py` nhận diện 4 loại phương tiện, hỗ trợ frame skipping, hiển thị FPS/count HUD và ghi video kết quả. Model mặc định là `final_weights/vehicle_detector_best.pt`.
+
+```powershell
+python scripts\pipeline_detector.py `
+       --source test_samples\videos\traffic.mp4 `
+       --skip-frames 2 `
+       --conf 0.35 `
+       --iou 0.45
+```
+
+Có thể truyền URL camera RTSP thay cho đường dẫn video:
+
+```powershell
+python scripts\pipeline_detector.py --source "rtsp://user:password@camera-ip:554/stream"
+```
+
+Video kết quả được ghi vào `runs/detect/pipeline_output.mp4`; log theo từng frame được ghi vào `runs/detect/detection_summary.json` và `runs/detect/detection_summary.csv`.
+
 ## Xử lý lỗi thường gặp
 
 - **Không nhận lệnh `python`**: cài Python và chọn tùy chọn thêm Python vào `PATH`.
