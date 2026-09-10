@@ -511,6 +511,8 @@ Video kết quả được ghi vào `runs/detect/pipeline_output.mp4`; log theo 
 
 Module `scripts/tracker_counter.py` dùng ByteTrack để duy trì ID, vẽ quỹ đạo và đếm mỗi phương tiện một lần khi tâm đáy bounding box cắt qua vạch.
 
+Module cũng dùng `weights/yolo11n.pt` (COCO) để loại các box `motorbike` chồng mạnh lên box `person`. Đây là bộ lọc giảm nhận diện nhầm trong lúc chạy; để sửa tận gốc, cần bổ sung ảnh người làm hard negative hoặc thêm class `person` rồi huấn luyện lại model custom.
+
 ```powershell
 python scripts\tracker_counter.py `
        --source test_samples\videos\17604987-hd_1920_1080_30fps.mp4 `

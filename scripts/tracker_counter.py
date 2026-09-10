@@ -16,6 +16,7 @@ from ultralytics import YOLO
 
 VEHICLE_CLASSES = ("car", "motorcycle", "bus", "truck")
 DEFAULT_WEIGHTS = Path(__file__).resolve().parents[1] / "final_weights" / "vehicle_detector_best.pt"
+DEFAULT_PERSON_WEIGHTS = Path(__file__).resolve().parents[1] / "weights" / "yolo11n.pt"
 DEFAULT_OUTPUT = Path(__file__).resolve().parents[1] / "runs" / "counting" / "counted_output.mp4"
 DEFAULT_REPORT_DIRECTORY = Path(__file__).resolve().parents[1] / "runs" / "counting"
 
@@ -26,6 +27,7 @@ class VehicleTrackerCounter:
     def __init__(
         self,
         weights: str | Path = DEFAULT_WEIGHTS,
+        person_weights: str | Path | None = DEFAULT_PERSON_WEIGHTS,
         output: str | Path = DEFAULT_OUTPUT,
         line: tuple[tuple[int, int], tuple[int, int]] = ((320, 360), (960, 360)),
         conf_threshold: float = 0.35,
@@ -37,12 +39,16 @@ class VehicleTrackerCounter:
         if trail_length < 2:
             raise ValueError("trail_length phải lớn hơn hoặc bằng 2.")
         self.weights = Path(weights)
+        self.person_weights = Path(person_weights) if person_weights else None
         self.output = Path(output)
         self.line = line
         self.conf_threshold = conf_threshold
         self.report_directory = Path(report_directory)
         self.trail_length = trail_length
         self.model = YOLO(str(self.weights))
+        self.person_model = None
+        if self.person_weights and self.person_weights.is_file():
+            self.person_model = YOLO(str(self.person_weights))
         self.trails: dict[int, deque[tuple[int, int]]] = defaultdict(
             lambda: deque(maxlen=self.trail_length)
         )
@@ -109,6 +115,46 @@ class VehicleTrackerCounter:
             })
         return tracks
 
+    @staticmethod
+    def _intersection_over_union(first_box, second_box) -> float:
+        first_x1, first_y1, first_x2, first_y2 = first_box
+        second_x1, second_y1, second_x2, second_y2 = second_box
+        overlap_x1 = max(first_x1, second_x1)
+        overlap_y1 = max(first_y1, second_y1)
+        overlap_x2 = min(first_x2, second_x2)
+        overlap_y2 = min(first_y2, second_y2)
+        overlap_area = max(0, overlap_x2 - overlap_x1) * max(0, overlap_y2 - overlap_y1)
+        first_area = max(0, first_x2 - first_x1) * max(0, first_y2 - first_y1)
+        second_area = max(0, second_x2 - second_x1) * max(0, second_y2 - second_y1)
+        union_area = first_area + second_area - overlap_area
+        return overlap_area / union_area if union_area else 0.0
+
+    def _person_boxes(self, frame):
+        if self.person_model is None:
+            return []
+        result = self.person_model.predict(source=frame, conf=0.35, classes=[0], verbose=False)[0]
+        if result.boxes is None:
+            return []
+        return [tuple(int(round(value)) for value in box.xyxy[0].tolist()) for box in result.boxes]
+
+    def _remove_person_false_positives(self, tracks, person_boxes):
+        filtered = []
+        for track in tracks:
+            if track["class_name"] != "motorcycle":
+                filtered.append(track)
+                continue
+            x1, y1, x2, y2 = track["box"]
+            bottom_center = track["center"]
+            is_person_like = any(
+                self._intersection_over_union(track["box"], person_box) >= 0.55
+                and person_box[0] <= bottom_center[0] <= person_box[2]
+                and person_box[1] <= bottom_center[1] <= person_box[3]
+                for person_box in person_boxes
+            )
+            if not is_person_like:
+                filtered.append(track)
+        return filtered
+
     def _register_crossing(self, track: dict[str, Any], timestamp: float) -> None:
         track_id = track["track_id"]
         if track_id in self.counted_ids:
@@ -158,6 +204,7 @@ class VehicleTrackerCounter:
             verbose=False,
         )
         tracks = self._extract_tracks(results[0])
+        tracks = self._remove_person_false_positives(tracks, self._person_boxes(frame))
         for track in tracks:
             track_id = track["track_id"]
             center = track["center"]
@@ -279,6 +326,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Tracking và đếm phương tiện qua vạch bằng ByteTrack.")
     parser.add_argument("--source", required=True, help="Đường dẫn video đầu vào.")
     parser.add_argument("--weights", type=Path, default=project_root / "final_weights" / "vehicle_detector_best.pt")
+    parser.add_argument("--person-weights", type=Path, default=project_root / "weights" / "yolo11n.pt", help="Model COCO để loại box người bị nhận nhầm là motorbike.")
     parser.add_argument("--line-coords", type=parse_line_coordinates, required=True, help="x1,y1,x2,y2 hoặc [[x1,y1],[x2,y2]].")
     parser.add_argument("--conf", type=float, default=0.35, help="Ngưỡng confidence.")
     parser.add_argument("--output", type=Path, default=project_root / "runs" / "counting" / "counted_output.mp4")
@@ -292,6 +340,7 @@ def main():
     try:
         counter = VehicleTrackerCounter(
             weights=args.weights,
+            person_weights=args.person_weights,
             output=args.output,
             line=args.line_coords,
             conf_threshold=args.conf,
