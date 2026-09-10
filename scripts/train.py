@@ -9,7 +9,7 @@ SPLITS = ("train", "val", "test")
 
 
 def parse_arguments():
-    project_root = Path(__file__).resolve().parent
+    project_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(
         description="Huấn luyện YOLO custom cho bốn loại phương tiện."
     )
@@ -133,7 +133,7 @@ def main():
     except ImportError:
         raise SystemExit("Chưa cài ultralytics. Hãy chạy: pip install ultralytics")
 
-    project_root = Path(__file__).resolve().parent
+    project_root = Path(__file__).resolve().parents[1]
     data_path = prepare_data_yaml(args.data.resolve(), project_root / "runs" / "detect")
     device = choose_device(args.device)
     output_directory = project_root / "runs" / "detect" / args.name

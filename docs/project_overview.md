@@ -69,6 +69,9 @@ giamsatgiaothong/
 ├── requirements.txt
 ├── .env.example
 ├── README.md
+├── scripts/                   # Lệnh huấn luyện, đánh giá và suy luận
+├── src/                       # Mã nguồn và tiện ích kiểm tra
+├── docs/                      # Tài liệu kỹ thuật
 ├── config/                    # Cấu hình Django và URL gốc
 ├── traffic/                   # Ứng dụng quản lý giao thông
 │   ├── migrations/

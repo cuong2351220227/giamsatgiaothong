@@ -20,7 +20,7 @@ def choose_dataset_directory(project_root):
 
 
 def parse_arguments():
-    project_root = Path(__file__).resolve().parent
+    project_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(
         description="Kiểm tra nhãn YOLO và tạo preview cho dataset custom."
     )

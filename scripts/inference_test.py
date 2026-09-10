@@ -24,7 +24,7 @@ VIDEO_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv", ".webm"}
 
 
 def parse_arguments():
-    project_root = Path(__file__).resolve().parent
+    project_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(
         description="Thử nghiệm nhận diện 4 class phương tiện bằng YOLO."
     )

@@ -13,7 +13,7 @@ VEHICLE_CLASSES = ("car", "motorcycle", "bus", "truck")
 
 
 def parse_arguments():
-    project_root = Path(__file__).resolve().parent
+    project_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(
         description="Đánh giá định lượng ban đầu cho kết quả YOLO pretrained."
     )

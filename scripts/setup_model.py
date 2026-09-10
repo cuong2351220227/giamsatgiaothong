@@ -27,7 +27,7 @@ def main():
             "python -m pip install ultralytics"
         )
 
-    project_root = Path(__file__).resolve().parent
+    project_root = Path(__file__).resolve().parents[1]
     weights_directory = project_root / "weights"
     weights_directory.mkdir(parents=True, exist_ok=True)
     model_path = weights_directory / args.model

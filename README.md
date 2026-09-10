@@ -347,39 +347,26 @@ Các lớp chính của hệ thống:
 
 ```text
 giamsatgiaothong/
-├── manage.py
-├── requirements.txt
-├── .env
-├── README.md
-│
-├── config/
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-│
-├── traffic/
-│   ├── models.py
-│   ├── views.py
-│   ├── urls.py
-│   ├── admin.py
-│   │
-│   ├── services/
-│   │   ├── video_processor.py
-│   │   ├── detector.py
-│   │   ├── counter.py
-│   │   └── classifier.py
-│   │
-│   ├── templates/
-│   └── static/
-│       ├── css/
-│       └── js/
-│
-├── dataset/
-│   ├── train/
-│   └── test/
-│
-└── weights/
-    └── best.pt
+├── README.md                  # Tài liệu chính
+├── requirements.txt           # Phụ thuộc Python
+├── .env.example               # Cấu hình mẫu, không chứa bí mật
+├── scripts/                   # Lệnh huấn luyện, đánh giá và suy luận
+│   ├── train.py
+│   ├── verify_dataset.py
+│   ├── inference_test.py
+│   ├── evaluate_pretrained.py
+│   ├── compare_models.py
+│   └── setup_model.py
+├── src/                       # Tiện ích kiểm tra và mã nguồn lõi
+│   └── check_dataset.py
+├── docs/                      # Mô tả dataset và ghi chú đánh giá
+│   ├── dataset_description.md
+│   ├── evaluation_notes.md
+│   └── project_overview.md
+├── data/                      # Dataset cục bộ, không commit
+├── weights/                   # Model cục bộ, không commit
+├── runs/                      # Kết quả chạy, không commit
+└── test_samples/              # Video/ảnh kiểm thử cục bộ, không commit
 ```
 
 ---
@@ -486,6 +473,17 @@ New-Item -ItemType Directory -Force dataset\train, dataset\test, weights
 ```
 
 Đặt model vào `weights\best.pt` hoặc cập nhật `YOLO_MODEL_PATH` trong `.env`. Video, dataset và model được Git bỏ qua vì có thể lớn hoặc chứa dữ liệu riêng tư.
+
+## 7. Chạy các script
+
+Các lệnh dưới đây được chạy từ thư mục gốc dự án:
+
+```powershell
+python scripts\verify_dataset.py
+python src\check_dataset.py
+python scripts\train.py --help
+python scripts\inference_test.py --help
+```
 
 ## Xử lý lỗi thường gặp
 

@@ -15,7 +15,7 @@ COCO_VEHICLE_NAMES = {2: "car", 3: "motorcycle", 5: "bus", 7: "truck"}
 
 
 def parse_arguments():
-    project_root = Path(__file__).resolve().parent
+    project_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(
         description="Validate and compare pretrained and custom YOLO models."
     )
@@ -202,7 +202,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     device = choose_device(args.device)
 
-    final_weights = Path(__file__).resolve().parent / "final_weights" / "vehicle_detector_best.pt"
+    final_weights = Path(__file__).resolve().parents[1] / "final_weights" / "vehicle_detector_best.pt"
     final_weights.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(args.custom_model, final_weights)
     print(f"Đã lưu best.pt tại: {final_weights}")

@@ -16,7 +16,7 @@ Tạo lại số liệu bằng:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
-python evaluate_pretrained.py
+python scripts/evaluate_pretrained.py
 ```
 
 ## 2. Số liệu tự động tổng hợp
