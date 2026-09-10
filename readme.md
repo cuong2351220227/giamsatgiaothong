@@ -384,49 +384,115 @@ giamsatgiaothong/
 
 ---
 
-# ⚙️ Cài đặt
+# ⚙️ Cài đặt môi trường
 
-### 1. Tạo môi trường ảo
+## Yêu cầu
 
-```bash
-python -m venv .venv
-```
+- Windows 10/11 và PowerShell.
+- Python 3.10 trở lên. Môi trường đã kiểm tra với Python 3.13.
+- Git.
+- PostgreSQL 14 trở lên nếu sử dụng cơ sở dữ liệu PostgreSQL.
+- Video giao thông và model YOLO đặt ở máy cục bộ.
 
-Windows:
+## 1. Tạo và kích hoạt virtual environment
+
+Mở PowerShell tại thư mục dự án:
 
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 2. Cài đặt thư viện
+Nếu PowerShell chặn script kích hoạt, chỉ áp dụng cho tài khoản hiện tại:
 
-```bash
-pip install -r requirements.txt
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ```
 
-### 3. Cấu hình PostgreSQL
+Sau đó chạy lại lệnh kích hoạt. Có thể dùng trực tiếp Python trong `.venv` mà không cần kích hoạt:
+
+```powershell
+.\.venv\Scripts\python.exe --version
+```
+
+## 2. Cài đặt thư viện Python
+
+```powershell
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Kiểm tra các thư viện chính:
+
+```powershell
+python -c "import cv2, django, numpy, pandas, sklearn; print('Environment OK')"
+python -m pip check
+```
+
+## 3. Cấu hình biến môi trường
+
+Tạo file `.env` từ file mẫu:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Mở `.env` và thay các giá trị mẫu, đặc biệt là `DJANGO_SECRET_KEY` và `POSTGRES_PASSWORD`. Không commit `.env` hoặc mật khẩu thật lên Git.
+
+Các biến chính gồm:
+
+```env
+DJANGO_SECRET_KEY=change-this-secret-key
+DJANGO_DEBUG=True
+POSTGRES_DB=traffic_monitoring
+POSTGRES_USER=traffic_user
+POSTGRES_PASSWORD=change-this-password
+POSTGRES_HOST=127.0.0.1
+POSTGRES_PORT=5432
+YOLO_MODEL_PATH=weights/best.pt
+```
+
+## 4. Tạo cơ sở dữ liệu PostgreSQL
+
+Đăng nhập PostgreSQL bằng `psql` hoặc pgAdmin và chạy:
 
 ```sql
 CREATE DATABASE traffic_monitoring;
-CREATE USER traffic_user WITH PASSWORD 'your_password';
+CREATE USER traffic_user WITH PASSWORD 'change-this-password';
 GRANT ALL PRIVILEGES ON DATABASE traffic_monitoring TO traffic_user;
 ```
 
-Tạo `.env` và cấu hình database, YOLO model.
+Đảm bảo thông tin trong `.env` trùng với tài khoản và cơ sở dữ liệu vừa tạo.
 
-### 4. Chạy hệ thống
+## 5. Khởi tạo và chạy Django
 
-```bash
+Khi `manage.py` đã có trong dự án, chạy:
+
+```powershell
+python manage.py check
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Truy cập:
+Mở website tại <http://127.0.0.1:8000/> và trang quản trị tại <http://127.0.0.1:8000/admin/>.
 
-```text
-http://127.0.0.1:8000/
+## 6. Dữ liệu video và model YOLO
+
+Tạo các thư mục dữ liệu cục bộ nếu cần:
+
+```powershell
+New-Item -ItemType Directory -Force dataset\train, dataset\test, weights
 ```
+
+Đặt model vào `weights\best.pt` hoặc cập nhật `YOLO_MODEL_PATH` trong `.env`. Video, dataset và model được Git bỏ qua vì có thể lớn hoặc chứa dữ liệu riêng tư.
+
+## Xử lý lỗi thường gặp
+
+- **Không nhận lệnh `python`**: cài Python và chọn tùy chọn thêm Python vào `PATH`.
+- **Không kích hoạt được `.venv`**: chạy `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+- **Không kết nối được PostgreSQL**: kiểm tra PostgreSQL đang chạy, host, port, user, password và tên database trong `.env`.
+- **OpenCV không đọc được video**: kiểm tra đường dẫn, định dạng video và quyền truy cập file.
 
 ---
 
