@@ -65,6 +65,7 @@ class TrafficDetectorPipeline:
         self.model = YOLO(str(self.weights))
         self.history: list[dict[str, Any]] = []
         self._last_detections: list[list[Any]] = []
+        self._log_source = ""
         self._start_time: float | None = None
         self._processed_frames = 0
 
@@ -179,6 +180,7 @@ class TrafficDetectorPipeline:
     def process_video(self, source: str | Path):
         """Read a video or RTSP stream, write annotated video, and save logs."""
         source_value = str(source)
+        self._log_source = source_value
         capture = cv2.VideoCapture(source_value)
         if not capture.isOpened():
             raise OSError(f"Không mở được video hoặc RTSP stream: {source_value}")
@@ -235,7 +237,7 @@ class TrafficDetectorPipeline:
         json_path = self.log_directory / "detection_summary.json"
         csv_path = self.log_directory / "detection_summary.csv"
         summary = {
-            "source": str(self.output),
+            "source": self._log_source,
             "weights": str(self.weights),
             "conf_threshold": self.conf_threshold,
             "iou_threshold": self.iou_threshold,
