@@ -507,6 +507,27 @@ python scripts\pipeline_detector.py --source "rtsp://user:password@camera-ip:554
 
 Video kết quả được ghi vào `runs/detect/pipeline_output.mp4`; log theo từng frame được ghi vào `runs/detect/detection_summary.json` và `runs/detect/detection_summary.csv`.
 
+### Tracking và đếm xe qua vạch
+
+Module `scripts/tracker_counter.py` dùng ByteTrack để duy trì ID, vẽ quỹ đạo và đếm mỗi phương tiện một lần khi tâm đáy bounding box cắt qua vạch.
+
+```powershell
+python scripts\tracker_counter.py `
+       --source test_samples\videos\17604987-hd_1920_1080_30fps.mp4 `
+       --line-coords 320,360,960,360 `
+       --conf 0.35
+```
+
+Có thể truyền tọa độ vạch dạng JSON:
+
+```powershell
+python scripts\tracker_counter.py `
+       --source "rtsp://user:password@camera-ip:554/stream" `
+       --line-coords "[[320,360],[960,360]]"
+```
+
+Video được ghi vào `runs/counting/counted_output.mp4`; báo cáo tổng kết được ghi vào `runs/counting/counting_summary.json` và `runs/counting/counting_summary.csv`.
+
 ## Xử lý lỗi thường gặp
 
 - **Không nhận lệnh `python`**: cài Python và chọn tùy chọn thêm Python vào `PATH`.
