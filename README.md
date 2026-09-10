@@ -478,6 +478,8 @@ New-Item -ItemType Directory -Force dataset\train, dataset\test, weights
 
 Các lệnh dưới đây được chạy từ thư mục gốc dự án:
 
+Toàn bộ đường dẫn dữ liệu và model trong mã nguồn đều được tạo bằng `pathlib` từ thư mục dự án hoặc dùng đường dẫn tương đối. Không cần sửa đường dẫn khi chuyển dự án giữa các máy; chỉ cần đặt `data/`, `weights/` và `test_samples/` đúng vị trí như cấu trúc trên.
+
 ```powershell
 python scripts\verify_dataset.py
 python src\check_dataset.py

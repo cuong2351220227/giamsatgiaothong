@@ -2,6 +2,7 @@
 
 import argparse
 import ast
+import os
 from pathlib import Path
 
 
@@ -92,12 +93,17 @@ def prepare_data_yaml(data_path, output_directory):
     corrected_path = output_directory / "data_train.yaml"
     names = ast.literal_eval(values.get("names", "[]"))
     class_count = int(values.get("nc", len(names)))
+    output_root = output_directory.resolve()
+
+    def portable_path(path):
+        return Path(os.path.relpath(path, output_root)).as_posix()
+
     lines = [
-        f"train: {resolved_splits['train']}",
-        f"val: {resolved_splits['val']}",
+        f"train: {portable_path(resolved_splits['train'])}",
+        f"val: {portable_path(resolved_splits['val'])}",
     ]
     if resolved_splits.get("test"):
-        lines.append(f"test: {resolved_splits['test']}")
+        lines.append(f"test: {portable_path(resolved_splits['test'])}")
     lines.extend([
         "",
         f"nc: {class_count}",
