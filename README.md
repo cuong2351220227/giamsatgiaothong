@@ -532,6 +532,71 @@ python scripts\tracker_counter.py `
 
 Video được ghi vào `runs/counting/counted_output.mp4`; báo cáo tổng kết được ghi vào `runs/counting/counting_summary.json` và `runs/counting/counting_summary.csv`.
 
+### Pretrain, fine-tune và đánh giá YOLO
+
+#### Mô hình pretrain
+
+Mô hình pretrain là mô hình YOLO đã được huấn luyện trước trên một bộ dữ liệu lớn. Trong dự án này, mô hình khởi tạo là:
+
+```text
+weights/yolo11n.pt
+```
+
+Mô hình này đã học các đặc trưng hình ảnh cơ bản như cạnh, hình dạng, màu sắc và kết cấu. Đây là điểm bắt đầu cho quá trình huấn luyện trên dữ liệu giao thông, không phải kết quả cuối cùng của đề tài.
+
+#### Fine-tune trên dữ liệu giao thông
+
+Fine-tune là huấn luyện tiếp mô hình pretrain trên bộ dữ liệu chuyên biệt của dự án:
+
+```text
+data/external_dataset/
+```
+
+Script [scripts/train.py](scripts/train.py) tải `weights/yolo11n.pt` rồi gọi `model.train(...)`. Cấu hình của lần huấn luyện được lưu tại `runs/detect/train/args.yaml`, trong đó các giá trị quan trọng là:
+
+```yaml
+pretrained: true
+freeze: null
+```
+
+`pretrained: true` xác nhận mô hình sử dụng trọng số đã học trước. `freeze: null` cho phép cập nhật các layer trong quá trình huấn luyện. Mô hình sau khi fine-tune được lưu trong `runs/detect/train/weights/` và bản dùng cho pipeline hiện tại là `final_weights/vehicle_detector_best.pt`.
+
+Quy trình tổng quát:
+
+```text
+YOLO11n pretrain
+       -> fine-tune trên data/external_dataset
+       -> validation trên tập val
+       -> vehicle_detector_best.pt
+       -> nhận diện video giao thông
+```
+
+#### Làm giàu dữ liệu trong lúc train
+
+Ultralytics áp dụng augmentation tự động trong lúc huấn luyện; ảnh gốc trong dataset không bị sửa và không tạo ra một thư mục ảnh augmented cố định. Các kỹ thuật được cấu hình trong `runs/detect/train/args.yaml` gồm:
+
+- Mosaic: `mosaic: 1.0`.
+- Lật ngang: `fliplr: 0.5`.
+- Biến đổi màu HSV: `hsv_h`, `hsv_s`, `hsv_v`.
+- Dịch chuyển: `translate: 0.1`.
+- Thay đổi tỷ lệ: `scale: 0.5`.
+- RandAugment: `auto_augment: randaugment`.
+- Tắt Mosaic trong 10 epoch cuối: `close_mosaic: 10`.
+
+Các phép `mixup`, `cutmix`, `copy_paste`, lật dọc, xoay, shear và perspective hiện đang tắt hoặc đặt bằng 0.
+
+#### Biểu đồ và metric đánh giá
+
+Sau khi validation, các biểu đồ được lưu trong `runs/detect/val/`:
+
+- `BoxP_curve.png`: Precision.
+- `BoxR_curve.png`: Recall.
+- `BoxPR_curve.png`: đường cong Precision-Recall.
+- `BoxF1_curve.png`: F1-score.
+- `confusion_matrix.png`: ma trận nhầm lẫn giữa các lớp.
+
+Các metric theo từng epoch nằm trong `runs/detect/train/results.csv`, gồm Precision, Recall, `mAP50` và `mAP50-95`. Với object detection, các metric này phù hợp hơn accuracy đơn lẻ. Ngược lại, `runs/detect/detection_summary.json` chỉ là log số lượng xe được phát hiện theo từng frame video; file này không dùng để tính Precision hoặc Recall vì video kiểm thử không có ground-truth label tương ứng.
+
 ## Xử lý lỗi thường gặp
 
 - **Không nhận lệnh `python`**: cài Python và chọn tùy chọn thêm Python vào `PATH`.
