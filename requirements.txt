@@ -5,7 +5,10 @@ pandas==3.0.5
 scikit-learn==1.9.0
 ultralytics
 lap>=0.5.12
-torch
-torchvision
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.11.0+cu128
+torchvision==0.26.0+cu128
 matplotlib
 tensorboard
+psycopg[binary]
+python-dotenv

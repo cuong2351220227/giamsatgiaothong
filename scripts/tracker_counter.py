@@ -29,13 +29,16 @@ class VehicleTrackerCounter:
         weights: str | Path = DEFAULT_WEIGHTS,
         person_weights: str | Path | None = DEFAULT_PERSON_WEIGHTS,
         output: str | Path = DEFAULT_OUTPUT,
-        line: tuple[tuple[int, int], tuple[int, int]] = ((320, 360), (960, 360)),
+        line: tuple[tuple[int, int], tuple[int, int]] | None = None,
         conf_threshold: float = 0.35,
+        imgsz: int = 512,
         report_directory: str | Path = DEFAULT_REPORT_DIRECTORY,
         trail_length: int = 30,
     ) -> None:
         if not 0 <= conf_threshold <= 1:
             raise ValueError("conf_threshold phải nằm trong khoảng từ 0 đến 1.")
+        if imgsz < 320:
+            raise ValueError("imgsz phải lớn hơn hoặc bằng 320.")
         if trail_length < 2:
             raise ValueError("trail_length phải lớn hơn hoặc bằng 2.")
         self.weights = Path(weights)
@@ -43,6 +46,7 @@ class VehicleTrackerCounter:
         self.output = Path(output)
         self.line = line
         self.conf_threshold = conf_threshold
+        self.imgsz = imgsz
         self.report_directory = Path(report_directory)
         self.trail_length = trail_length
         self.model = YOLO(str(self.weights))
@@ -74,6 +78,12 @@ class VehicleTrackerCounter:
             if self._canonical_class_name(str(name)) in VEHICLE_CLASSES
         ]
         return allowed or None
+
+    @staticmethod
+    def default_counting_line(width: int, height: int) -> tuple[tuple[int, int], tuple[int, int]]:
+        """Place a horizontal line inside the frame instead of using fixed pixels."""
+        y = round(height * 0.68)
+        return ((round(width * 0.08), y), (round(width * 0.92), y))
 
     @staticmethod
     def _side_of_line(point: tuple[int, int], line: tuple[tuple[int, int], tuple[int, int]]) -> int:
@@ -201,10 +211,14 @@ class VehicleTrackerCounter:
             tracker="bytetrack.yaml",
             conf=self.conf_threshold,
             classes=self._allowed_ids,
+            imgsz=self.imgsz,
             verbose=False,
         )
         tracks = self._extract_tracks(results[0])
-        tracks = self._remove_person_false_positives(tracks, self._person_boxes(frame))
+        if self.person_model is not None and any(
+            track["class_name"] == "motorcycle" for track in tracks
+        ):
+            tracks = self._remove_person_false_positives(tracks, self._person_boxes(frame))
         for track in tracks:
             track_id = track["track_id"]
             center = track["center"]
@@ -244,6 +258,8 @@ class VehicleTrackerCounter:
         if width <= 0 or height <= 0:
             capture.release()
             raise OSError("Không đọc được kích thước video đầu vào.")
+        if self.line is None:
+            self.line = self.default_counting_line(width, height)
 
         self.output.parent.mkdir(parents=True, exist_ok=True)
         writer = cv2.VideoWriter(
@@ -279,6 +295,7 @@ class VehicleTrackerCounter:
             "frames": self._frame_count,
             "counts": dict(self.counts),
             "total": sum(self.counts.values()),
+            "crossings": list(self.crossings),
         }
 
     def save_logs(self, source: str | Path):
@@ -330,6 +347,7 @@ def parse_arguments():
     parser.add_argument("--line-coords", type=parse_line_coordinates, required=True, help="x1,y1,x2,y2 hoặc [[x1,y1],[x2,y2]].")
     parser.add_argument("--conf", type=float, default=0.35, help="Ngưỡng confidence.")
     parser.add_argument("--output", type=Path, default=project_root / "runs" / "counting" / "counted_output.mp4")
+    parser.add_argument("--imgsz", type=int, default=512, help="Kích thước inference YOLO (mặc định 512).")
     return parser.parse_args()
 
 
@@ -344,6 +362,7 @@ def main():
             output=args.output,
             line=args.line_coords,
             conf_threshold=args.conf,
+            imgsz=args.imgsz,
         )
         result = counter.process_video(args.source)
     except (OSError, ValueError) as error:

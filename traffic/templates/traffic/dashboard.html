@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Traffic Monitoring Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #111827;
+            --panel-soft: #1f2937;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(148, 163, 184, 0.2);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(135deg, #020817, var(--bg));
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 20px 60px;
+        }
+
+        h1 {
+            margin-bottom: 24px;
+            font-size: 2.2rem;
+        }
+
+        .top-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card, .panel {
+            background: rgba(17, 24, 39, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
+        }
+
+        .card {
+            padding: 20px;
+        }
+
+        .card h3 {
+            margin: 0 0 8px;
+            font-size: 0.9rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .card .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .panel {
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .panel h2 {
+            margin: 0 0 16px;
+            font-size: 1.2rem;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            align-items: end;
+        }
+
+        label {
+            display: flex;
+            flex-direction: column;
+            font-size: 0.85rem;
+            color: var(--muted);
+            gap: 8px;
+        }
+
+        input, button {
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            font-size: 0.95rem;
+        }
+
+        input {
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text);
+        }
+
+        button {
+            background: var(--accent);
+            color: #06233a;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            opacity: 0.92;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        th, td {
+            border-bottom: 1px solid var(--border);
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 0.92rem;
+        }
+
+        th {
+            color: var(--muted);
+            background: rgba(30, 41, 59, 0.7);
+        }
+
+        #video-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .video-item {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .video-item strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .video-item button {
+            margin-top: 12px;
+            width: 100%;
+        }
+
+        .video-meta {
+            color: var(--muted);
+            overflow-wrap: anywhere;
+            font-size: 0.85rem;
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 280px;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: bold;
+            color: #0f172a;
+            background: var(--success);
+        }
+
+        .pill.warning { background: var(--warning); }
+        .pill.danger { background: var(--danger); }
+
+        @media (max-width: 720px) {
+            .container { padding: 18px 12px 40px; }
+            h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Traffic Monitoring Dashboard</h1>
+
+        <div class="top-grid">
+            <div class="card">
+                <h3>Current status</h3>
+                <p class="value" id="current-status">Loading...</p>
+            </div>
+            <div class="card">
+                <h3>Vehicle count</h3>
+                <p class="value" id="current-count">0</p>
+            </div>
+            <div class="card">
+                <h3>Latest density</h3>
+                <p class="value" id="latest-density">0.00</p>
+            </div>
+        </div>
+
+        <section class="panel">
+            <h2>Add new video</h2>
+            <form id="video-form">
+                {% csrf_token %}
+                <label>
+                    Title
+                    <input type="text" name="title" placeholder="Video name" />
+                </label>
+                <label>
+                    Video file
+                    <input type="file" name="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm,.m4v" required />
+                </label>
+                <button type="submit">Upload video</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>Videos</h2>
+            <div id="video-list"></div>
+        </section>
+
+        <section class="panel">
+            <h2>Traffic history</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Video</th>
+                        <th>Status</th>
+                        <th>Vehicles</th>
+                        <th>Captured at</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body"></tbody>
+            </table>
+        </section>
+
+        <section class="panel">
+            <h2>Traffic stats</h2>
+            <div class="chart-wrap"><canvas id="traffic-chart" aria-label="Traffic volume chart"></canvas></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Total</th>
+                        <th>Cars</th>
+                        <th>Motorcycles</th>
+                        <th>Bus</th>
+                        <th>Truck</th>
+                        <th>Density</th>
+                    </tr>
+                </thead>
+                <tbody id="stats-table-body"></tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+        let trafficChart;
+
+        async function fetchJson(url, options = {}) {
+            const headers = {};
+            if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            if (csrfToken) headers['X-CSRFToken'] = csrfToken;
+            const response = await fetch(url, {
+                ...options,
+                headers: { ...headers, ...options.headers },
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Request failed');
+            }
+            return data;
+        }
+
+        function statusClass(status) {
+            if (status === 'Ùn tắc') return 'pill danger';
+            if (status === 'Đông') return 'pill warning';
+            return 'pill';
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+            })[character]);
+        }
+
+        function renderVideoList(videos) {
+            const root = document.getElementById('video-list');
+            if (!videos.length) {
+                root.innerHTML = '<p>No videos yet.</p>';
+                return;
+            }
+
+            root.innerHTML = videos.map(video => `
+                <div class="video-item">
+                    <strong>${escapeHtml(video.title)}</strong>
+                    <div class="video-meta">${escapeHtml(video.file_path)}</div>
+                    <div class="video-meta">Duration: ${escapeHtml(video.duration)}s</div>
+                    <div class="video-meta">Created: ${escapeHtml(new Date(video.created_at).toLocaleString())}</div>
+                    <button type="button" data-process-video="${Number(video.id)}">Process video</button>
+                </div>
+            `).join('');
+        }
+
+        function renderCurrent(data) {
+            const statusNode = document.getElementById('current-status');
+            const countNode = document.getElementById('current-count');
+            statusNode.textContent = data.status_label || data.status || 'Bình thường';
+            statusNode.className = statusClass(data.status || 'Bình thường');
+            countNode.textContent = data.vehicle_count ?? 0;
+        }
+
+        function renderHistory(data) {
+            const tbody = document.getElementById('history-table-body');
+            const rows = data.history || [];
+            tbody.innerHTML = rows.map(item => `
+                <tr>
+                    <td>${escapeHtml(item.video)}</td>
+                    <td><span class="${statusClass(item.status)}">${escapeHtml(item.status_label || item.status)}</span></td>
+                    <td>${Number(item.vehicle_count || 0)}</td>
+                    <td>${escapeHtml(new Date(item.captured_at).toLocaleString())}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderStats(data) {
+            const tbody = document.getElementById('stats-table-body');
+            const rows = data.stats || [];
+            tbody.innerHTML = rows.map(item => `
+                <tr>
+                    <td>${escapeHtml(new Date(item.captured_at).toLocaleString())}</td>
+                    <td>${Number(item.total_vehicles || 0)}</td>
+                    <td>${Number(item.car_count || 0)}</td>
+                    <td>${Number(item.motorcycle_count || 0)}</td>
+                    <td>${Number(item.bus_count || 0)}</td>
+                    <td>${Number(item.truck_count || 0)}</td>
+                    <td>${Number(item.density || 0).toFixed(2)}</td>
+                </tr>
+            `).join('');
+            const density = rows[0]?.density ?? 0;
+            document.getElementById('latest-density').textContent = Number(density).toFixed(2);
+
+            const chronologicalRows = [...rows].reverse();
+            const chartContext = document.getElementById('traffic-chart');
+            if (trafficChart) trafficChart.destroy();
+            trafficChart = new Chart(chartContext, {
+                type: 'line',
+                data: {
+                    labels: chronologicalRows.map(item => new Date(item.captured_at).toLocaleTimeString()),
+                    datasets: [{
+                        label: 'Vehicles',
+                        data: chronologicalRows.map(item => Number(item.total_vehicles || 0)),
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.18)',
+                        fill: true,
+                        tension: 0.25,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.12)' } },
+                        y: { beginAtZero: true, ticks: { precision: 0, color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.12)' } },
+                    },
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } },
+                },
+            });
+        }
+
+        async function loadDashboard() {
+            try {
+                const [videos, current, history, stats] = await Promise.all([
+                    fetchJson('/api/videos/'),
+                    fetchJson('/api/traffic/current/'),
+                    fetchJson('/api/traffic/history/'),
+                    fetchJson('/api/traffic/stats/')
+                ]);
+
+                renderVideoList(videos.videos || []);
+                renderCurrent(current);
+                renderHistory(history);
+                renderStats(stats);
+            } catch (error) {
+                console.error(error);
+                document.getElementById('video-list').innerHTML = `<p>${error.message}</p>`;
+            }
+        }
+
+        document.getElementById('video-form').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const formData = new FormData(form);
+
+            try {
+                await fetchJson('/api/videos/', {
+                    method: 'POST',
+                    body: formData,
+                });
+                form.reset();
+                await loadDashboard();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        document.getElementById('video-list').addEventListener('click', async function (event) {
+            const button = event.target.closest('[data-process-video]');
+            if (!button) return;
+
+            button.disabled = true;
+            button.textContent = 'Processing...';
+            try {
+                await fetchJson(`/api/videos/${Number(button.dataset.processVideo)}/process/`, { method: 'POST' });
+                await loadDashboard();
+            } catch (error) {
+                alert(error.message);
+                button.disabled = false;
+                button.textContent = 'Process video';
+            }
+        });
+
+        loadDashboard();
+    </script>
+</body>
+</html>
