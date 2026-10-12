@@ -162,6 +162,22 @@
             width: 100%;
         }
 
+        .video-preview {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            margin-top: 12px;
+            border-radius: 6px;
+            background: #05080a;
+            object-fit: contain;
+        }
+
+        .video-caption {
+            margin: 12px 0 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
         .video-meta {
             color: var(--muted);
             overflow-wrap: anywhere;
@@ -315,6 +331,18 @@
                     <div class="video-meta">${escapeHtml(video.file_path)}</div>
                     <div class="video-meta">Duration: ${escapeHtml(video.duration)}s</div>
                     <div class="video-meta">Created: ${escapeHtml(new Date(video.created_at).toLocaleString())}</div>
+                    ${video.video_url ? `
+                        <p class="video-caption">Source video</p>
+                        <video class="video-preview" controls preload="metadata" src="${escapeHtml(video.video_url)}">
+                            Your browser cannot play this video format.
+                        </video>
+                    ` : ''}
+                    ${video.processed_url ? `
+                        <p class="video-caption">Vehicle detection and tracking</p>
+                        <video class="video-preview" controls preload="metadata" src="${escapeHtml(video.processed_url)}">
+                            Your browser cannot play this video format.
+                        </video>
+                    ` : ''}
                     <button type="button" data-process-video="${Number(video.id)}">Process video</button>
                 </div>
             `).join('');

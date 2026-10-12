@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from django.conf import settings
+
 from scripts.tracker_counter import VehicleTrackerCounter
 
 from .classifier import KMeansTrafficClassifier
@@ -24,18 +26,20 @@ class VideoProcessingService:
         if not weights.is_file():
             raise OSError(f"Không tìm thấy model YOLO: {weights}")
 
-        output_directory = project_root / "runs" / "counting" / "processed"
+        output_directory = Path(settings.MEDIA_ROOT) / "processed"
         if self.video_id is not None:
             output_directory /= f"video_{self.video_id}"
         else:
             output_directory /= self.source_path.stem
         output_path = output_directory / "annotated.mp4"
+        report_directory = project_root / "runs" / "counting" / "processed"
+        report_directory /= f"video_{self.video_id}" if self.video_id is not None else self.source_path.stem
         person_weights = project_root / "weights" / "yolo11n.pt"
         tracker = VehicleTrackerCounter(
             weights=weights,
             person_weights=person_weights if person_weights.is_file() else None,
             output=output_path,
-            report_directory=output_directory,
+            report_directory=report_directory,
         )
         tracking_result = tracker.process_video(self.source_path)
         raw_counts = tracking_result.get("counts", {})

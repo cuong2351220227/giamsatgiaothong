@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 
 from .models import TrafficSnapshot, TrafficStatus, Video
@@ -39,25 +39,6 @@ class TrafficViewsTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("file_path", response.json()["error"])
-
-    def test_api_videos_uploads_selected_video_file(self):
-        with TemporaryDirectory() as media_root:
-            with override_settings(MEDIA_ROOT=media_root):
-                response = self.client.post(
-                    "/api/videos/",
-                    data={
-                        "title": "Uploaded clip",
-                        "file": SimpleUploadedFile(
-                            "traffic.mp4",
-                            b"video bytes",
-                            content_type="video/mp4",
-                        ),
-                    },
-                )
-
-                self.assertEqual(response.status_code, 201)
-                self.assertEqual(response.json()["video"]["title"], "Uploaded clip")
-                self.assertTrue(Path(response.json()["video"]["file_path"]).is_file())
 
     def test_api_videos_create_and_list_work(self):
         response = self.client.post(
@@ -108,7 +89,14 @@ class TrafficViewsTests(TestCase):
             ],
         }
 
-        result = VideoProcessingService(source_path, video_id=7).process()
+        with TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                result = VideoProcessingService(source_path, video_id=7).process()
+                output_path = Path(tracker_class.call_args.kwargs["output"])
+                self.assertEqual(
+                    output_path,
+                    Path(media_root) / "processed" / "video_7" / "annotated.mp4",
+                )
 
         tracker_class.assert_called_once()
         tracker_class.return_value.process_video.assert_called_once_with(source_path)
@@ -168,3 +156,56 @@ class TrafficViewsTests(TestCase):
 
         current = self.client.get(reverse("traffic:current"))
         self.assertEqual(current.status_code, 200)
+
+
+class MediaServingTests(TransactionTestCase):
+    def test_api_upload_and_video_byte_ranges_work(self):
+        with TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                response = self.client.post(
+                    "/api/videos/",
+                    data={
+                        "title": "Uploaded clip",
+                        "file": SimpleUploadedFile(
+                            "traffic.mp4",
+                            b"video bytes",
+                            content_type="video/mp4",
+                        ),
+                    },
+                )
+
+                self.assertEqual(response.status_code, 201)
+                self.assertEqual(response.json()["video"]["title"], "Uploaded clip")
+                self.assertTrue(Path(response.json()["video"]["file_path"]).is_file())
+                video_url = response.json()["video"]["video_url"]
+                self.assertEqual(video_url, "/media/videos/traffic.mp4")
+
+                media_response = self.client.get(video_url, HTTP_RANGE="bytes=0-4")
+                self.assertEqual(media_response.status_code, 206)
+                self.assertEqual(media_response["Content-Range"], "bytes 0-4/11")
+                try:
+                    self.assertEqual(b"".join(media_response.streaming_content), b"video")
+                finally:
+                    media_response.close()
+
+    def test_processed_video_is_exposed_as_a_playable_media_url(self):
+        video = Video.objects.create(title="processed", file_path="/local/source.mp4")
+        with TemporaryDirectory() as media_root:
+            processed_path = Path(media_root) / "processed" / f"video_{video.id}" / "annotated.mp4"
+            processed_path.parent.mkdir(parents=True)
+            processed_path.write_bytes(b"annotated video")
+
+            with override_settings(MEDIA_ROOT=media_root):
+                response = self.client.get("/api/videos/")
+                video_data = next(item for item in response.json()["videos"] if item["id"] == video.id)
+                self.assertEqual(
+                    video_data["processed_url"],
+                    f"/media/processed/video_{video.id}/annotated.mp4",
+                )
+
+                media_response = self.client.get(video_data["processed_url"], HTTP_RANGE="bytes=2-6")
+                self.assertEqual(media_response.status_code, 206)
+                try:
+                    self.assertEqual(b"".join(media_response.streaming_content), b"notat")
+                finally:
+                    media_response.close()

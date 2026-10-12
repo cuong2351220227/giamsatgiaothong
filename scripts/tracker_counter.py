@@ -5,12 +5,14 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import subprocess
 import time
 from collections import Counter, defaultdict, deque
 from pathlib import Path
 from typing import Any
 
 import cv2
+import imageio_ffmpeg
 from ultralytics import YOLO
 
 
@@ -262,15 +264,16 @@ class VehicleTrackerCounter:
             self.line = self.default_counting_line(width, height)
 
         self.output.parent.mkdir(parents=True, exist_ok=True)
+        intermediate_output = self.output.with_name(f"{self.output.stem}.opencv.mp4")
         writer = cv2.VideoWriter(
-            str(self.output),
+            str(intermediate_output),
             cv2.VideoWriter_fourcc(*"mp4v"),
             output_fps,
             (width, height),
         )
         if not writer.isOpened():
             capture.release()
-            raise OSError(f"Không tạo được video output: {self.output}")
+            raise OSError(f"Không tạo được video trung gian: {intermediate_output}")
 
         self._frame_count = 0
         self._start_time = time.perf_counter()
@@ -288,6 +291,30 @@ class VehicleTrackerCounter:
         finally:
             capture.release()
             writer.release()
+
+        ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+        input_args = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(intermediate_output)]
+        output_args = ["-map", "0:v:0", "-an", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(self.output)]
+        encoders = [
+            ["-c:v", "h264_nvenc", "-preset", "p4", "-cq", "25", "-b:v", "0"],
+            ["-c:v", "libx264", "-preset", "veryfast", "-crf", "25"],
+        ]
+        for encoder_args in encoders:
+            conversion = subprocess.run(
+                [*input_args, *encoder_args, *output_args],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if conversion.returncode == 0:
+                break
+            self.output.unlink(missing_ok=True)
+        else:
+            intermediate_output.unlink(missing_ok=True)
+            error_detail = conversion.stderr.strip().splitlines()[-1:] or ["Không rõ nguyên nhân."]
+            raise OSError(f"Không mã hóa được video H.264: {error_detail[0]}")
+
+        intermediate_output.unlink(missing_ok=True)
         self.save_logs(source)
         return {
             "source": str(source),

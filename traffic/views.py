@@ -1,13 +1,17 @@
 import json
+import mimetypes
 import math
 from pathlib import Path
+import re
 from urllib.parse import parse_qs
 
 from django.conf import settings
 from django.core.files.storage import default_storage
-from django.http import JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import render
 from django.db import transaction
+from django.utils.encoding import filepath_to_uri
+from django.utils._os import safe_join
 from django.views.decorators.http import require_http_methods
 from django.utils.text import get_valid_filename
 
@@ -43,10 +47,26 @@ def _parse_json_body(request):
 
 
 def _serialize_video(video):
+    media_root = Path(settings.MEDIA_ROOT).resolve()
+    source_path = Path(video.file_path).resolve()
+    try:
+        source_relative_path = source_path.relative_to(media_root)
+        video_url = f"{settings.MEDIA_URL}{filepath_to_uri(source_relative_path.as_posix())}"
+    except ValueError:
+        video_url = None
+
+    processed_path = media_root / "processed" / f"video_{video.id}" / "annotated.mp4"
+    processed_url = None
+    if processed_path.is_file():
+        processed_relative_path = processed_path.relative_to(media_root)
+        processed_url = f"{settings.MEDIA_URL}{filepath_to_uri(processed_relative_path.as_posix())}"
+
     return {
         "id": video.id,
         "title": video.title,
         "file_path": video.file_path,
+        "video_url": video_url,
+        "processed_url": processed_url,
         "duration": video.duration,
         "created_at": video.created_at.isoformat(),
     }
@@ -65,6 +85,64 @@ def _serialize_status(entry):
 
 def dashboard(request):
     return render(request, "traffic/dashboard.html")
+
+
+def media_file(request, path):
+    try:
+        media_path = Path(safe_join(str(settings.MEDIA_ROOT), path))
+    except ValueError as exc:
+        raise Http404 from exc
+    if not media_path.is_file():
+        raise Http404
+
+    file_size = media_path.stat().st_size
+    content_type = mimetypes.guess_type(media_path.name)[0] or "application/octet-stream"
+    range_header = request.headers.get("Range")
+    if range_header:
+        match = re.fullmatch(r"bytes=(\d*)-(\d*)", range_header.strip())
+        if not match or not any(match.groups()) or file_size == 0:
+            response = HttpResponse(status=416)
+            response["Content-Range"] = f"bytes */{file_size}"
+            response["Accept-Ranges"] = "bytes"
+            return response
+
+        range_start, range_end = match.groups()
+        if range_start:
+            start = int(range_start)
+            end = int(range_end) if range_end else file_size - 1
+        else:
+            suffix_length = int(range_end)
+            start = max(file_size - suffix_length, 0)
+            end = file_size - 1
+        if start >= file_size or end < start:
+            response = HttpResponse(status=416)
+            response["Content-Range"] = f"bytes */{file_size}"
+            response["Accept-Ranges"] = "bytes"
+            return response
+
+        end = min(end, file_size - 1)
+        remaining = end - start + 1
+
+        def stream_range():
+            with media_path.open("rb") as media:
+                media.seek(start)
+                bytes_left = remaining
+                while bytes_left:
+                    chunk = media.read(min(64 * 1024, bytes_left))
+                    if not chunk:
+                        break
+                    bytes_left -= len(chunk)
+                    yield chunk
+
+        response = StreamingHttpResponse(stream_range(), status=206, content_type=content_type)
+        response["Content-Length"] = str(remaining)
+        response["Content-Range"] = f"bytes {start}-{end}/{file_size}"
+        response["Accept-Ranges"] = "bytes"
+        return response
+
+    response = FileResponse(media_path.open("rb"), content_type=content_type)
+    response["Accept-Ranges"] = "bytes"
+    return response
 
 
 def healthcheck(request):
@@ -223,8 +301,19 @@ def _process_video_record(video):
         "counts": counts,
         "density": snapshot.density,
         "output": result.get("output"),
+        "output_url": _media_url(result.get("output")),
         "frames": result.get("frames", 0),
     })
+
+
+def _media_url(file_path):
+    if not file_path:
+        return None
+    try:
+        relative_path = Path(file_path).resolve().relative_to(Path(settings.MEDIA_ROOT).resolve())
+    except ValueError:
+        return None
+    return f"{settings.MEDIA_URL}{filepath_to_uri(relative_path.as_posix())}"
 
 
 @require_http_methods(["POST"])
