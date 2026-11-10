@@ -29,6 +29,10 @@ class TrafficViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="csrfmiddlewaretoken"')
+        self.assertContains(response, "Quản lý video")
+        self.assertContains(response, 'id="results-list"')
+        self.assertContains(response, 'id="video-list"')
+        self.assertContains(response, 'id="stream-select"')
         self.assertIn("csrftoken", response.cookies)
 
     def test_api_videos_requires_file_path_on_create(self):
@@ -69,10 +73,19 @@ class TrafficViewsTests(TestCase):
         history = self.client.get("/api/traffic/history/")
         self.assertEqual(history.status_code, 200)
         self.assertIn("history", history.json())
+        self.assertEqual(history.json()["history"][0]["video_id"], video.id)
 
         stats = self.client.get("/api/traffic/stats/")
         self.assertEqual(stats.status_code, 200)
         self.assertIn("stats", stats.json())
+
+    def test_stream_endpoint_rejects_video_outside_upload_storage(self):
+        video = Video.objects.create(title="Local video", file_path="C:/private/video.mp4")
+
+        response = self.client.get(f"/api/videos/{video.id}/stream/")
+
+        self.assertEqual(response.status_code, 422)
+        self.assertIn("đã upload", response.json()["error"])
 
     @patch("traffic.services.video_processor.VehicleTrackerCounter")
     def test_video_processing_runs_tracker_and_returns_persistable_results(self, tracker_class):
@@ -159,6 +172,27 @@ class TrafficViewsTests(TestCase):
 
 
 class MediaServingTests(TransactionTestCase):
+    @patch("traffic.views.LiveVehicleStream")
+    def test_uploaded_video_can_be_selected_as_a_live_mjpeg_stream(self, stream_class):
+        with TemporaryDirectory() as media_root:
+            source_path = Path(media_root) / "videos" / "road.mp4"
+            source_path.parent.mkdir(parents=True)
+            source_path.write_bytes(b"video")
+            with override_settings(MEDIA_ROOT=media_root):
+                video = Video.objects.create(title="Uploaded road video", file_path=str(source_path))
+                stream_class.return_value.frames.return_value = iter([
+                    b"--frame\r\nContent-Type: image/jpeg\r\n\r\ntest\r\n",
+                ])
+
+                response = self.client.get(f"/api/videos/{video.id}/stream/")
+
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(response["Content-Type"].startswith("multipart/x-mixed-replace"))
+                self.assertIn(b"--frame", next(iter(response.streaming_content)))
+                response.close()
+                stream_class.return_value.close.assert_called()
+                stream_class.assert_called_once_with(str(source_path.resolve()), video)
+
     def test_api_upload_and_video_byte_ranges_work(self):
         with TemporaryDirectory() as media_root:
             with override_settings(MEDIA_ROOT=media_root):

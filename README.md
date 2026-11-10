@@ -381,7 +381,22 @@ giamsatgiaothong/
 - PostgreSQL 14 trở lên nếu sử dụng cơ sở dữ liệu PostgreSQL.
 - Video giao thông và model YOLO đặt ở máy cục bộ.
 
-## 1. Tạo và kích hoạt virtual environment
+## 1. Lấy mã nguồn từ GitHub
+
+Mở PowerShell tại thư mục bạn muốn lưu dự án, sau đó chạy:
+
+```powershell
+git clone https://github.com/cuong2351220227/giamsatgiaothong.git
+cd giamsatgiaothong
+```
+
+Nếu đã clone dự án trước đó và muốn lấy các thay đổi mới nhất:
+
+```powershell
+git pull
+```
+
+## 2. Tạo và kích hoạt virtual environment
 
 Mở PowerShell tại thư mục dự án:
 
@@ -402,7 +417,7 @@ Sau đó chạy lại lệnh kích hoạt. Có thể dùng trực tiếp Python 
 .\.venv\Scripts\python.exe --version
 ```
 
-## 2. Cài đặt thư viện Python
+## 3. Cài đặt thư viện Python
 
 ```powershell
 python -m pip install --upgrade pip
@@ -416,7 +431,7 @@ python -c "import cv2, django, numpy, pandas, sklearn; print('Environment OK')"
 python -m pip check
 ```
 
-## 3. Cấu hình biến môi trường
+## 4. Cấu hình biến môi trường
 
 Tạo file `.env` từ file mẫu:
 
@@ -439,7 +454,7 @@ POSTGRES_PORT=5432
 YOLO_MODEL_PATH=weights/best.pt
 ```
 
-## 4. Tạo cơ sở dữ liệu PostgreSQL
+## 5. Tạo cơ sở dữ liệu PostgreSQL
 
 Đăng nhập PostgreSQL bằng `psql` hoặc pgAdmin và chạy:
 
@@ -451,7 +466,7 @@ GRANT ALL PRIVILEGES ON DATABASE traffic_monitoring TO traffic_user;
 
 Đảm bảo thông tin trong `.env` trùng với tài khoản và cơ sở dữ liệu vừa tạo.
 
-## 5. Khởi tạo và chạy Django
+## 6. Khởi tạo và chạy Django
 
 Khi `manage.py` đã có trong dự án, chạy:
 
@@ -464,7 +479,7 @@ python manage.py runserver
 
 Mở website tại <http://127.0.0.1:8000/> và trang quản trị tại <http://127.0.0.1:8000/admin/>.
 
-## 6. Dữ liệu video và model YOLO
+## 7. Dữ liệu video và model YOLO
 
 Tạo các thư mục dữ liệu cục bộ nếu cần:
 
@@ -474,7 +489,7 @@ New-Item -ItemType Directory -Force dataset\train, dataset\test, weights
 
 Đặt model vào `weights\best.pt` hoặc cập nhật `YOLO_MODEL_PATH` trong `.env`. Video, dataset và model được Git bỏ qua vì có thể lớn hoặc chứa dữ liệu riêng tư.
 
-## 7. Chạy các script
+## 8. Chạy các script
 
 Các lệnh dưới đây được chạy từ thư mục gốc dự án:
 

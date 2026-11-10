@@ -17,6 +17,7 @@ from django.utils.text import get_valid_filename
 
 from .models import TrafficSnapshot, TrafficStatus, Video
 from .services import VideoProcessingService
+from .services.live_stream import LiveVehicleStream
 
 MAX_VIDEO_UPLOAD_BYTES = 500 * 1024 * 1024
 VIDEO_UPLOAD_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"}
@@ -60,7 +61,6 @@ def _serialize_video(video):
     if processed_path.is_file():
         processed_relative_path = processed_path.relative_to(media_root)
         processed_url = f"{settings.MEDIA_URL}{filepath_to_uri(processed_relative_path.as_posix())}"
-
     return {
         "id": video.id,
         "title": video.title,
@@ -75,6 +75,7 @@ def _serialize_video(video):
 def _serialize_status(entry):
     return {
         "id": entry.id,
+        "video_id": entry.video_id,
         "video": entry.video.title,
         "status": entry.status,
         "status_label": entry.status_label,
@@ -207,6 +208,37 @@ def videos(request):
 
 def api_videos(request):
     return videos(request)
+
+
+@require_http_methods(["GET"])
+def stream_feed(request, video_id):
+    try:
+        video = Video.objects.get(pk=video_id)
+    except Video.DoesNotExist:
+        return JsonResponse({"error": "Không tìm thấy video đã tải lên."}, status=404)
+
+    source_path = Path(video.file_path).resolve()
+    uploads_root = (Path(settings.MEDIA_ROOT) / "videos").resolve()
+    try:
+        source_path.relative_to(uploads_root)
+    except ValueError:
+        return JsonResponse({"error": "Chỉ hỗ trợ stream video đã upload lên web."}, status=422)
+    if not source_path.is_file():
+        return JsonResponse({"error": "Không tìm thấy file video đã upload."}, status=422)
+
+    try:
+        live_stream = LiveVehicleStream(str(source_path), video)
+    except (OSError, ValueError, RuntimeError) as exc:
+        return JsonResponse({"error": str(exc)}, status=422)
+
+    response = StreamingHttpResponse(
+        live_stream.frames(),
+        content_type="multipart/x-mixed-replace; boundary=frame",
+    )
+    response._resource_closers.append(live_stream.close)
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    response["X-Accel-Buffering"] = "no"
+    return response
 
 
 @require_http_methods(["GET"])

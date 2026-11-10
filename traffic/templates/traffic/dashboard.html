@@ -7,78 +7,165 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <style>
         :root {
-            --bg: #0f172a;
-            --panel: #111827;
-            --panel-soft: #1f2937;
-            --text: #e5e7eb;
-            --muted: #94a3b8;
-            --accent: #38bdf8;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --border: rgba(148, 163, 184, 0.2);
+            --bg: #081120;
+            --bg-soft: #101b2b;
+            --panel: rgba(15, 23, 42, 0.86);
+            --panel-alt: rgba(15, 23, 42, 0.68);
+            --panel-strong: #111c2d;
+            --surface: rgba(148, 163, 184, 0.08);
+            --text: #e2e8f0;
+            --muted: #9aa9bf;
+            --accent: #2dd4bf;
+            --accent-strong: #14b8a6;
+            --accent-soft: rgba(45, 212, 191, 0.18);
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --border: rgba(148, 163, 184, 0.22);
+            --shadow: 0 18px 45px rgba(8, 17, 32, 0.45);
         }
 
         * { box-sizing: border-box; }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background: linear-gradient(135deg, #020817, var(--bg));
+            font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(45, 212, 191, 0.15), transparent 32%),
+                radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.17), transparent 26%),
+                linear-gradient(135deg, #050d18 0%, var(--bg) 40%, #0a1321 100%);
             color: var(--text);
+            line-height: 1.5;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 32px 20px 60px;
+            padding: 32px 20px 64px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 22px;
+            margin-bottom: 26px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, var(--accent), #60a5fa);
+            color: #04131e;
+            font-weight: 800;
+            box-shadow: 0 10px 30px rgba(45, 212, 191, 0.35);
         }
 
         h1 {
-            margin-bottom: 24px;
-            font-size: 2.2rem;
+            margin: 0;
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            letter-spacing: -0.03em;
+        }
+
+        .header-tag {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(45, 212, 191, 0.35);
+            background: rgba(45, 212, 191, 0.08);
+            color: var(--accent);
+            font-size: 0.76rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 700;
         }
 
         .top-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: 18px;
+            margin-bottom: 22px;
         }
 
         .card, .panel {
-            background: rgba(17, 24, 39, 0.9);
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.72));
             border: 1px solid var(--border);
-            border-radius: 14px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
         }
 
         .card {
-            padding: 20px;
+            padding: 20px 22px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto auto 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), transparent);
         }
 
         .card h3 {
             margin: 0 0 8px;
-            font-size: 0.9rem;
+            font-size: 0.78rem;
             color: var(--muted);
-            text-transform: uppercase;
             letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 700;
         }
 
         .card .value {
-            font-size: 1.8rem;
-            font-weight: bold;
+            font-size: clamp(1.8rem, 2.6vw, 2.2rem);
+            font-weight: 700;
             margin: 0;
+            letter-spacing: -0.05em;
         }
 
         .panel {
-            padding: 20px;
-            margin-top: 20px;
+            padding: 22px;
+            margin-top: 18px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
         }
 
         .panel h2 {
-            margin: 0 0 16px;
-            font-size: 1.2rem;
+            margin: 0;
+            font-size: 1.05rem;
+            letter-spacing: -0.02em;
+        }
+
+        .panel-subtitle {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
         }
 
         form {
@@ -91,44 +178,139 @@
         label {
             display: flex;
             flex-direction: column;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             color: var(--muted);
             gap: 8px;
+            font-weight: 600;
         }
 
-        input, button {
-            border-radius: 10px;
+        input, select, button {
+            border-radius: 12px;
             border: 1px solid var(--border);
-            padding: 10px 12px;
-            font-size: 0.95rem;
+            padding: 11px 12px;
+            font-size: 0.96rem;
+            font-family: inherit;
         }
 
-        input {
+        input, select {
             background: rgba(15, 23, 42, 0.9);
             color: var(--text);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        button {
-            background: var(--accent);
-            color: #06233a;
-            font-weight: bold;
+        input:focus, select:focus {
+            outline: none;
+            border-color: rgba(45, 212, 191, 0.8);
+            box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.12);
+        }
+
+        .view-tabs {
+            display: flex;
+            gap: 10px;
+            margin: 0 0 18px;
+            padding: 6px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.7);
+            width: fit-content;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+        }
+
+        .view-tabs button {
+            background: transparent;
+            color: var(--muted);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-weight: 700;
+            min-width: 130px;
+            transition: all 0.2s ease;
+        }
+
+        .view-tabs button[aria-selected="true"] {
+            color: var(--text);
+            background: linear-gradient(180deg, rgba(45, 212, 191, 0.18), rgba(59, 130, 246, 0.12));
+            box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.2);
+        }
+
+        .primary-btn, .action-btn {
+            background: linear-gradient(135deg, var(--accent), #38bdf8);
+            color: #02141d;
+            font-weight: 800;
             cursor: pointer;
             border: none;
+            box-shadow: 0 12px 24px rgba(45, 212, 191, 0.28);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
         }
 
-        button:hover {
-            opacity: 0.92;
+        .primary-btn:hover, .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 28px rgba(45, 212, 191, 0.32);
+        }
+
+        .secondary-btn {
+            background: rgba(148, 163, 184, 0.08);
+            color: var(--text);
+            border: 1px solid var(--border);
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .secondary-btn:disabled, .action-btn:disabled, .primary-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .stream-controls {
+            display: grid;
+            grid-template-columns: minmax(240px, 1fr) auto auto;
+            gap: 12px;
+            align-items: end;
+            margin-top: 18px;
+        }
+
+        .stream-controls button {
+            min-width: 108px;
+        }
+
+        .stream-status {
+            color: var(--muted);
+            align-self: center;
+            font-size: 0.9rem;
+        }
+
+        .live-feed-wrap {
+            margin-top: 18px;
+            background: linear-gradient(180deg, rgba(2, 6, 23, 0.9), rgba(15, 23, 42, 0.9));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            min-height: 360px;
+            display: grid;
+            place-items: center;
+        }
+
+        .live-feed {
+            display: block;
+            width: 100%;
+            max-height: 72vh;
+            object-fit: contain;
+            background: rgba(2, 6, 23, 0.85);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 12px;
+            overflow: hidden;
+            border-radius: 12px;
         }
 
         th, td {
             border-bottom: 1px solid var(--border);
-            padding: 10px 12px;
+            padding: 12px 14px;
             text-align: left;
             font-size: 0.92rem;
         }
@@ -136,29 +318,86 @@
         th {
             color: var(--muted);
             background: rgba(30, 41, 59, 0.7);
+            font-size: 0.74rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        tbody tr:hover {
+            background: rgba(148, 163, 184, 0.04);
         }
 
         #video-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        #results-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .result-card {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            background: var(--panel-alt);
+        }
+
+        .result-card h3 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             gap: 12px;
+        }
+
+        .result-counts {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
             margin-top: 14px;
+        }
+
+        .result-counts div {
+            padding: 9px 10px;
+            border-radius: 10px;
+            background: var(--surface);
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .result-counts strong {
+            color: var(--text);
         }
 
         .video-item {
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px;
-            background: rgba(15, 23, 42, 0.7);
+            border-radius: 16px;
+            padding: 16px;
+            background: var(--panel-alt);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .video-item strong {
             display: block;
             margin-bottom: 4px;
+            font-size: 1rem;
+            letter-spacing: -0.02em;
         }
 
         .video-item button {
-            margin-top: 12px;
+            margin-top: auto;
             width: 100%;
         }
 
@@ -166,37 +405,45 @@
             display: block;
             width: 100%;
             aspect-ratio: 16 / 9;
-            margin-top: 12px;
-            border-radius: 6px;
-            background: #05080a;
+            margin-top: 8px;
+            border-radius: 10px;
+            background: #040b13;
             object-fit: contain;
+            border: 1px solid rgba(148, 163, 184, 0.18);
         }
 
         .video-caption {
-            margin: 12px 0 0;
+            margin: 10px 0 0;
             color: var(--muted);
-            font-size: 0.82rem;
+            font-size: 0.76rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-weight: 700;
         }
 
         .video-meta {
             color: var(--muted);
             overflow-wrap: anywhere;
-            font-size: 0.85rem;
+            font-size: 0.83rem;
         }
 
         .chart-wrap {
             position: relative;
-            height: 280px;
+            height: 300px;
+            margin-top: 12px;
         }
 
         .pill {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             padding: 5px 10px;
             border-radius: 999px;
             font-size: 0.76rem;
-            font-weight: bold;
-            color: #0f172a;
+            font-weight: 800;
+            color: #04131d;
             background: var(--success);
+            line-height: 1;
         }
 
         .pill.warning { background: var(--warning); }
@@ -204,59 +451,79 @@
 
         @media (max-width: 720px) {
             .container { padding: 18px 12px 40px; }
-            h1 { font-size: 1.8rem; }
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 18px 16px;
+            }
+            .view-tabs {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .view-tabs button {
+                min-width: 0;
+                flex: 1;
+            }
+            .stream-controls {
+                grid-template-columns: 1fr 1fr;
+            }
+            .stream-controls label, .stream-status {
+                grid-column: 1 / -1;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Traffic Monitoring Dashboard</h1>
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark">T</div>
+                <div>
+                    <h1>Bảng điều khiển giao thông</h1>
+                </div>
+            </div>
+            <div class="header-tag">Live monitoring</div>
+        </header>
 
+        <nav class="view-tabs" role="tablist" aria-label="Traffic views">
+            <button type="button" role="tab" id="dashboard-tab" aria-selected="true" aria-controls="dashboard-view">Tổng quan</button>
+            <button type="button" role="tab" id="streams-tab" aria-selected="false" aria-controls="streams-view">Quản lý video</button>
+        </nav>
+
+        <div id="dashboard-view" role="tabpanel" aria-labelledby="dashboard-tab">
         <div class="top-grid">
             <div class="card">
-                <h3>Current status</h3>
-                <p class="value" id="current-status">Loading...</p>
+                <h3>Trạng thái hiện tại</h3>
+                <p class="value" id="current-status">Đang tải...</p>
             </div>
             <div class="card">
-                <h3>Vehicle count</h3>
+                <h3>Số lượng xe</h3>
                 <p class="value" id="current-count">0</p>
             </div>
             <div class="card">
-                <h3>Latest density</h3>
+                <h3>Mật độ mới nhất</h3>
                 <p class="value" id="latest-density">0.00</p>
             </div>
         </div>
 
         <section class="panel">
-            <h2>Add new video</h2>
-            <form id="video-form">
-                {% csrf_token %}
-                <label>
-                    Title
-                    <input type="text" name="title" placeholder="Video name" />
-                </label>
-                <label>
-                    Video file
-                    <input type="file" name="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm,.m4v" required />
-                </label>
-                <button type="submit">Upload video</button>
-            </form>
+            <div class="panel-header">
+                <h2>Kết quả xử lý gần đây</h2>
+            </div>
+            <div id="results-list" aria-live="polite"></div>
         </section>
 
         <section class="panel">
-            <h2>Videos</h2>
-            <div id="video-list"></div>
-        </section>
-
-        <section class="panel">
-            <h2>Traffic history</h2>
+            <div class="panel-header">
+                <h2>Lịch sử giao thông</h2>
+            </div>
             <table>
                 <thead>
                     <tr>
                         <th>Video</th>
-                        <th>Status</th>
-                        <th>Vehicles</th>
-                        <th>Captured at</th>
+                        <th>Trạng thái</th>
+                        <th>Xe</th>
+                        <th>Thời gian</th>
                     </tr>
                 </thead>
                 <tbody id="history-table-body"></tbody>
@@ -264,23 +531,75 @@
         </section>
 
         <section class="panel">
-            <h2>Traffic stats</h2>
+            <div class="panel-header">
+                <h2>Thống kê giao thông</h2>
+            </div>
             <div class="chart-wrap"><canvas id="traffic-chart" aria-label="Traffic volume chart"></canvas></div>
             <table>
                 <thead>
                     <tr>
-                        <th>Time</th>
-                        <th>Total</th>
-                        <th>Cars</th>
-                        <th>Motorcycles</th>
-                        <th>Bus</th>
-                        <th>Truck</th>
-                        <th>Density</th>
+                        <th>Thời gian</th>
+                        <th>Tổng</th>
+                        <th>Ô tô</th>
+                        <th>Xe máy</th>
+                        <th>Xe buýt</th>
+                        <th>Xe tải</th>
+                        <th>Mật độ</th>
                     </tr>
                 </thead>
                 <tbody id="stats-table-body"></tbody>
             </table>
         </section>
+        </div>
+
+        <div id="streams-view" role="tabpanel" aria-labelledby="streams-tab" hidden>
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Thêm video mới</h2>
+                </div>
+                <form id="video-form">
+                    {% csrf_token %}
+                    <label>
+                        Tiêu đề
+                        <input type="text" name="title" placeholder="Tên video" />
+                    </label>
+                    <label>
+                        Tệp video
+                        <input type="file" name="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm,.m4v" required />
+                    </label>
+                    <button class="primary-btn" type="submit">Tải lên</button>
+                </form>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Danh sách video</h2>
+                </div>
+                <div id="video-list"></div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Phát video trực tiếp qua stream</h2>
+                </div>
+                <p class="panel-subtitle">Chọn một video trong hệ thống. Mỗi frame được xử lý bằng mô hình YOLO và hiển thị trực tiếp tại đây.</p>
+                <div class="stream-controls">
+                    <label>
+                        Video đã tải lên
+                        <select id="stream-select" aria-label="Chọn video đã tải lên">
+                            <option value="">Đang tải video...</option>
+                        </select>
+                    </label>
+                    <button class="primary-btn" type="button" id="stream-start">Bắt đầu</button>
+                    <button class="secondary-btn" type="button" id="stream-stop" disabled>Dừng</button>
+                    <span class="stream-status" id="stream-status" role="status">Chưa kết nối</span>
+                </div>
+
+                <div class="live-feed-wrap">
+                    <img id="live-feed" class="live-feed" alt="Luồng camera với nhận diện và đếm xe" hidden />
+                </div>
+            </section>
+        </div>
     </div>
 
     <script>
@@ -321,7 +640,7 @@
         function renderVideoList(videos) {
             const root = document.getElementById('video-list');
             if (!videos.length) {
-                root.innerHTML = '<p>No videos yet.</p>';
+                root.innerHTML = '<p class="panel-subtitle">Chưa có video nào. Hãy tải video lên để bắt đầu.</p>';
                 return;
             }
 
@@ -332,27 +651,107 @@
                     <div class="video-meta">Duration: ${escapeHtml(video.duration)}s</div>
                     <div class="video-meta">Created: ${escapeHtml(new Date(video.created_at).toLocaleString())}</div>
                     ${video.video_url ? `
-                        <p class="video-caption">Source video</p>
+                        <p class="video-caption">Video nguồn</p>
                         <video class="video-preview" controls preload="metadata" src="${escapeHtml(video.video_url)}">
-                            Your browser cannot play this video format.
+                            Trình duyệt của bạn không hỗ trợ phát video này.
                         </video>
                     ` : ''}
                     ${video.processed_url ? `
-                        <p class="video-caption">Vehicle detection and tracking</p>
+                        <p class="video-caption">Phân tích và theo dõi</p>
                         <video class="video-preview" controls preload="metadata" src="${escapeHtml(video.processed_url)}">
-                            Your browser cannot play this video format.
+                            Trình duyệt của bạn không hỗ trợ phát video này.
                         </video>
                     ` : ''}
-                    <button type="button" data-process-video="${Number(video.id)}">Process video</button>
+                    <button class="action-btn" type="button" data-process-video="${Number(video.id)}">Xử lý video</button>
                 </div>
             `).join('');
+        }
+
+        function renderResults(statsData, videosData, historyData) {
+            const root = document.getElementById('results-list');
+            const videosById = new Map((videosData.videos || []).map(video => [Number(video.id), video]));
+            const statusesByVideoId = new Map();
+            (historyData.history || []).forEach(item => {
+                if (!statusesByVideoId.has(Number(item.video_id))) {
+                    statusesByVideoId.set(Number(item.video_id), item);
+                }
+            });
+
+            const seenVideos = new Set();
+            const results = (statsData.stats || []).filter(item => {
+                const videoId = Number(item.video_id);
+                if (seenVideos.has(videoId)) return false;
+                seenVideos.add(videoId);
+                return true;
+            });
+
+            if (!results.length) {
+                root.innerHTML = '<p class="panel-subtitle">Chưa có kết quả xử lý. Tải video lên và chọn “Xử lý video” trong phần quản lý.</p>';
+                return;
+            }
+
+            root.innerHTML = results.map(item => {
+                const video = videosById.get(Number(item.video_id));
+                const status = statusesByVideoId.get(Number(item.video_id));
+                return `
+                    <article class="result-card">
+                        <div class="result-header">
+                            <h3>${escapeHtml(video?.title || `Video #${item.video_id}`)}</h3>
+                            <span class="${statusClass(status?.status || 'Bình thường')}">${escapeHtml(status?.status_label || status?.status || 'Bình thường')}</span>
+                        </div>
+                        <div class="result-counts">
+                            <div>Tổng số xe: <strong>${Number(item.total_vehicles || 0)}</strong></div>
+                            <div>Ô tô: <strong>${Number(item.car_count || 0)}</strong></div>
+                            <div>Xe máy: <strong>${Number(item.motorcycle_count || 0)}</strong></div>
+                            <div>Xe buýt: <strong>${Number(item.bus_count || 0)}</strong></div>
+                            <div>Xe tải: <strong>${Number(item.truck_count || 0)}</strong></div>
+                            <div>Mật độ: <strong>${Number(item.density || 0).toFixed(2)}</strong></div>
+                        </div>
+                        <p class="video-meta">Thời gian: ${escapeHtml(new Date(item.captured_at).toLocaleString())}</p>
+                        ${video?.processed_url ? `
+                            <p class="video-caption">Video kết quả</p>
+                            <video class="video-preview" controls preload="metadata" src="${escapeHtml(video.processed_url)}">
+                                Trình duyệt của bạn không hỗ trợ phát video này.
+                            </video>
+                        ` : ''}
+                    </article>
+                `;
+            }).join('');
+        }
+
+        async function loadStreamVideos() {
+            const select = document.getElementById('stream-select');
+            const selectedId = select.value;
+            try {
+                const data = await fetchJson('/api/videos/');
+                const sources = (data.videos || []).filter(video => video.video_url);
+                select.innerHTML = '<option value="">Chọn video đã tải lên</option>' + sources.map(video => `
+                    <option value="${Number(video.id)}">${escapeHtml(video.title)}</option>
+                `).join('');
+                if (sources.some(video => String(video.id) === selectedId)) select.value = selectedId;
+                select.disabled = sources.length === 0;
+                document.getElementById('stream-start').disabled = sources.length === 0;
+            } catch (error) {
+                select.innerHTML = `<option value="">${escapeHtml(error.message)}</option>`;
+                select.disabled = true;
+            }
+        }
+
+        function stopLiveStream(refreshDashboard = true) {
+            const image = document.getElementById('live-feed');
+            image.removeAttribute('src');
+            image.hidden = true;
+            document.getElementById('stream-start').disabled = false;
+            document.getElementById('stream-stop').disabled = true;
+            document.getElementById('stream-status').textContent = 'Đã dừng luồng';
+            if (refreshDashboard) window.setTimeout(loadDashboard, 700);
         }
 
         function renderCurrent(data) {
             const statusNode = document.getElementById('current-status');
             const countNode = document.getElementById('current-count');
             statusNode.textContent = data.status_label || data.status || 'Bình thường';
-            statusNode.className = statusClass(data.status || 'Bình thường');
+            statusNode.className = 'value ' + statusClass(data.status || 'Bình thường');
             countNode.textContent = data.vehicle_count ?? 0;
         }
 
@@ -427,11 +826,44 @@
                 renderCurrent(current);
                 renderHistory(history);
                 renderStats(stats);
+                renderResults(stats, videos, history);
             } catch (error) {
                 console.error(error);
-                document.getElementById('video-list').innerHTML = `<p>${error.message}</p>`;
+                document.getElementById('results-list').innerHTML = `<p>${escapeHtml(error.message)}</p>`;
+                document.getElementById('video-list').innerHTML = `<p>${escapeHtml(error.message)}</p>`;
             }
         }
+
+        document.querySelectorAll('[role="tab"]').forEach(tab => {
+            tab.addEventListener('click', async function () {
+                const showStreams = tab.id === 'streams-tab';
+                document.getElementById('dashboard-tab').setAttribute('aria-selected', String(!showStreams));
+                document.getElementById('streams-tab').setAttribute('aria-selected', String(showStreams));
+                document.getElementById('dashboard-view').hidden = showStreams;
+                document.getElementById('streams-view').hidden = !showStreams;
+                if (showStreams) await loadStreamVideos();
+            });
+        });
+
+        document.getElementById('stream-start').addEventListener('click', function () {
+            const videoId = Number(document.getElementById('stream-select').value);
+            if (!videoId) return;
+
+            const image = document.getElementById('live-feed');
+            const status = document.getElementById('stream-status');
+            image.hidden = false;
+            image.onload = () => { status.textContent = 'Đang nhận luồng và xử lý bằng YOLO'; };
+            image.onerror = () => {
+                status.textContent = 'Không kết nối được luồng camera';
+                stopLiveStream(false);
+            };
+            image.src = `/api/videos/${videoId}/stream/?t=${Date.now()}`;
+            document.getElementById('stream-start').disabled = true;
+            document.getElementById('stream-stop').disabled = false;
+            status.textContent = 'Đang đọc video và nạp weights...';
+        });
+
+        document.getElementById('stream-stop').addEventListener('click', () => stopLiveStream());
 
         document.getElementById('video-form').addEventListener('submit', async function (event) {
             event.preventDefault();
