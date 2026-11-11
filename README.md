@@ -1,6 +1,6 @@
 Link tiến độ : https://app.notion.com/p/9c307b5ded15458a82b8d83302b334d7?v=0115e61469a34f5b9e7e02d18de3e269&source=copy_link
-Link data: https://drive.google.com/drive/folders/19scMSEuZcmSFB6-4GyDY2EMV9Onc_jzY?usp=sharing
-link csdl: https://drive.google.com/file/d/1QGqo_-CPMOfVR4ptDq5FLTg4vASgHxiN/view?usp=sharing
+Link data: https://drive.google.com/drive/folders/19scMSEuZcmSFB6-4GyDY2EMV9Onc_jzY?usp=sharing                                                                                 
+link csdl: https://drive.google.com/file/d/1QGqo_-CPMOfVR4ptDq5FLTg4vASgHxiN/view?usp=sharing                                                                                                   
 Link báo cáo: 
 Link slide: https://docs.google.com/presentation/d/1unF0bT-ezt6vSzWFXzgNi-lyC2MopJxY/edit?usp=sharing&ouid=104650159239727953187&rtpof=true&sd=true
 
