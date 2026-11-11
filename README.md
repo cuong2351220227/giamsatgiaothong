@@ -1,3 +1,6 @@
+Link tiến độ : https://app.notion.com/p/9c307b5ded15458a82b8d83302b334d7?v=0115e61469a34f5b9e7e02d18de3e269&source=copy_link
+Link data: 
+link csdl:
 # 🚦 Hệ thống giám sát giao thông
 
 Hệ thống sử dụng **YOLO + OpenCV + K-Means** để tự động nhận diện, đếm phương tiện và đánh giá tình trạng giao thông qua video.
