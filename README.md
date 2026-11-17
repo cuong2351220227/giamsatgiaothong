@@ -7,7 +7,7 @@ Hệ thống sử dụng **YOLO + OpenCV + K-Means** để tự động nhận d
 - [Tiến độ dự án](https://app.notion.com/p/9c307b5ded15458a82b8d83302b334d7?v=0115e61469a34f5b9e7e02d18de3e269&source=copy_link)
 - [Dữ liệu train](https://drive.google.com/drive/folders/19scMSEuZcmSFB6-4GyDY2EMV9Onc_jzY?usp=sharing)
 - [Cơ sở dữ liệu](https://drive.google.com/file/d/1QGqo_-CPMOfVR4ptDq5FLTg4vASgHxiN/view?usp=sharing)
-- [Slide thuyết trình](https://docs.google.com/presentation/d/1unF0bT-ezt6vSzWFXzgNi-lyC2MopJxY/edit?usp=sharing&ouid=104650159239727953187&rtpof=true&sd=true)
+- [Slide thuyết trình](https://docs.google.com/presentation/d/1T46Y3_8H1tf9ba3ZfP8FvqMxifzKR72n/edit?usp=sharing&ouid=104650159239727953187&rtpof=true&sd=true)
 - [Báo cáo](https://drive.google.com/file/d/1ZXbAsN_Pz7P3yYhQCIFz0PA-KcqoK5ss/view?usp=sharing)
 
 ## ✨ Chức năng chính
